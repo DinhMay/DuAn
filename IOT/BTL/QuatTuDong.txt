@@ -1,0 +1,134 @@
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Servo.h>  
+#define sensor 7    
+
+#define motor 10
+#define IN3 9
+#define IN4 8
+
+LiquidCrystal_I2C lcd (0x27,16,2);
+//int motor = 3;           
+const int DHTPIN = 6;       
+const int DHTTYPE = DHT11;  
+DHT dht(DHTPIN, DHTTYPE);
+
+int Ledpin[]={ 12, 11};
+ //           0,1
+int i;   
+
+byte degree[8] = {     
+  0B01110,
+  0B01010,
+  0B01110,
+  0B00000,
+  0B00000,
+  0B00000,
+  0B00000,
+  0B00000
+};
+
+void hienthichuoi( String chuoi)
+{
+  for( int j= 0; j< chuoi.length(); j++)
+  {
+    lcd.print( chuoi[ j]);
+  }
+}
+
+void hienthiso( int so)
+{
+  String chuoi= String( so);
+  for( int j= 0; j< chuoi.length(); j++)
+  {
+    lcd.print( chuoi[ j]);
+  }
+}
+
+  String array1= "Temp: ";
+  String array3= "Nhiet do on dinh";
+  String array4= "Khong co nguoi";
+  String array5= "---- Mode1 ----";
+  String array6= "---- Mode2 ----";
+
+void setup() {
+  // put your setup code here, to run once:
+  lcd.begin();      
+  lcd.backlight();
+  lcd.createChar( 0, degree);   
+  dht.begin();    
+  for(i=0; i<2; i++)
+     pinMode(Ledpin[i], OUTPUT);
+
+  for(i=0; i<2; i++)
+    digitalWrite(Ledpin[i], LOW);
+
+  pinMode( motor, OUTPUT);
+  pinMode( IN3, OUTPUT);
+  pinMode( IN4, OUTPUT);
+  digitalWrite( IN3, LOW);
+  digitalWrite( IN4, HIGH);
+}
+
+void loop() {
+  const int potPin = A0;
+  int t = dht.readTemperature();  // nhiệt độ
+  int mysensor = digitalRead( sensor);
+  int potValue= analogRead( potPin);
+  int value = map( potValue, 0, 1023, 0, 255);
+  if( mysensor== 1)
+  {
+    if( round( t)> 25 and round( t)<= 35)
+    {
+      lcd.clear();
+      analogWrite( motor, 150);
+      digitalWrite( Ledpin[ 0], HIGH);
+      digitalWrite( Ledpin[ 1], LOW);
+      lcd.setCursor( 0, 0);
+      hienthichuoi( array5);
+      lcd.setCursor( 0, 1);
+      hienthichuoi( array1);
+      lcd.setCursor(6,1);
+      hienthiso( round( t));
+      lcd.write( byte( 0));
+      lcd.print("C");
+      delay( 500);
+    }
+    if( round( t)> 35)
+    {
+      lcd.clear();
+      analogWrite( motor, 255);
+      digitalWrite( Ledpin[ 0], LOW);
+      digitalWrite( Ledpin[ 1], HIGH);
+      lcd.setCursor( 0, 0);
+      hienthichuoi( array6);
+      lcd.setCursor( 0, 1);
+      hienthichuoi( array1);
+      lcd.setCursor(6,1);
+      hienthiso( round( t));
+      lcd.write( byte( 0));
+      lcd.print("C");
+      delay( 500);
+    }
+    if( round( t)< 25)
+    {
+      analogWrite( motor, 0);
+      digitalWrite( Ledpin[ 0], LOW);
+      digitalWrite( Ledpin[ 1], LOW);
+      lcd.setCursor( 0, 0);
+      hienthichuoi( array3);
+      delay( 500);
+    }
+  }
+  else
+  {
+    analogWrite( motor, 0);
+    digitalWrite( Ledpin[ 0], LOW);
+    digitalWrite( Ledpin[ 1], LOW);
+    lcd.setCursor( 0, 0);
+    hienthichuoi( array4);
+    delay( 500);
+  }
+  
+}
